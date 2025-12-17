@@ -6,9 +6,9 @@
     "compile": "compact compile contracts/hello-world.compact contracts/managed/hello-world",
     "build": "tsc",
     "deploy": "node dist/deploy.js",
+    "cli": "node dist/cli.js",
     "store-message": "node dist/storeMessage.js",
-    "query-indexer1": "node dist/queryIndexer1.js",
-    "query-indexer2": "node dist/queryIndexer2.js"
+    "query-indexer": "node dist/queryIndexer.js"
   },
   "dependencies": {
     "@midnight-ntwrk/compact-runtime": "^0.9.0",

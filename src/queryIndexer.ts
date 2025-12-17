@@ -73,6 +73,7 @@ async function main() {
   const ledger = HelloWorldModule.ledger(state.data);
   const message = Buffer.from(ledger.message).toString();
 
+  console.log("Current state:", state, "\n");
   console.log("Current message on-chain:", `"${message}"`);
 }
 
