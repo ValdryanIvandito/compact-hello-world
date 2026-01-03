@@ -1,16 +1,10 @@
-
 {
   "name": "my-mn-app",
   "version": "1.0.0",
   "type": "module",
   "scripts": {
     "compile": "compact compile contracts/hello-world.compact contracts/managed/hello-world",
-    "build": "tsc",
-    "deploy": "tsx src/services/deploy.ts",
-    "start": "tsx src/main.ts",
-    "faucet": "tsx src/faucet.ts",
-    "store-message": "tsx src/storeMessage.ts",
-    "query-indexer": "tsx src/queryIndexer.ts"
+    "start": "tsx src/cli/index.ts"
   },
   "dependencies": {
     "@midnight-ntwrk/compact-runtime": "^0.9.0",

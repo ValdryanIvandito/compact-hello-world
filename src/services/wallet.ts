@@ -1,10 +1,6 @@
-// src/services/wallet.ts
-
-// External Libraries
 import crypto from "node:crypto";
 import { firstValueFrom } from "rxjs";
 
-// Midnight Libraries
 import type { Wallet, WalletState } from "@midnight-ntwrk/wallet-api";
 import { WalletBuilder } from "@midnight-ntwrk/wallet";
 import { Transaction } from "@midnight-ntwrk/ledger";
@@ -21,67 +17,18 @@ import {
 export interface WalletContext {
   wallet: Wallet;
   state: WalletState;
+  close: () => Promise<void>;
 }
 
 /**
- * Konfigurasi minimal network untuk wallet
- */
-export interface WalletNetworkConfig {
-  indexer: string;
-  indexerWS: string;
-  proofServer: string;
-  node: string;
-  zSwapNetworkId: number;
-  logLevel?: "debug" | "info" | "warn" | "error";
-}
-
-/**
- * Adapter wallet agar kompatibel dengan midnight-js-contracts
- */
-export function setWalletProvider(
-  wallet: Wallet,
-  state: { coinPublicKey: string; encryptionPublicKey: string }
-) {
-  return {
-    coinPublicKey: state.coinPublicKey,
-    encryptionPublicKey: state.encryptionPublicKey,
-
-    // Proses balancing → proving → serialize ulang
-    balanceTx(tx: any, newCoins: any) {
-      return wallet
-        .balanceTransaction(
-          ZswapTransaction.deserialize(
-            tx.serialize(getLedgerNetworkId()),
-            getZswapNetworkId()
-          ),
-          newCoins
-        )
-        .then((tx) => wallet.proveTransaction(tx))
-        .then((zswapTx) =>
-          Transaction.deserialize(
-            zswapTx.serialize(getZswapNetworkId()),
-            getLedgerNetworkId()
-          )
-        )
-        .then(createBalancedTx);
-    },
-
-    // Submit transaction ke node
-    submitTx(tx: any) {
-      return wallet.submitTransaction(tx);
-    },
-  };
-}
-
-/**
- * Build wallet dari seed yang sudah ada
+ * Build wallet dari seed
  */
 export async function buildWallet(
-  config: WalletNetworkConfig,
+  config: any,
   seed: string
 ): Promise<WalletContext> {
-  if (!seed) {
-    throw new Error("Wallet seed is required");
+  if (!seed || seed.length !== 64) {
+    throw new Error("Seed wallet tidak valid");
   }
 
   const wallet = await WalletBuilder.build(
@@ -96,23 +43,55 @@ export async function buildWallet(
 
   wallet.start();
 
-  // Ambil state awal wallet
   const state = await firstValueFrom(wallet.state());
 
-  return { wallet, state };
+  return {
+    wallet,
+    state,
+    close: async () => wallet.close(),
+  };
 }
 
 /**
- * Generate seed baru + build wallet
+ * Adapter wallet agar kompatibel dengan deployContract
  */
-export async function getNewWallet(
-  config: WalletNetworkConfig
-): Promise<WalletContext & { seed: string }> {
-  const seed = crypto.randomBytes(32).toString("hex");
-  const ctx = await buildWallet(config, seed);
-
+export function createWalletProvider(wallet: Wallet, state: WalletState) {
   return {
-    ...ctx,
-    seed,
+    coinPublicKey: state.coinPublicKey,
+    encryptionPublicKey: state.encryptionPublicKey,
+
+    async balanceTx(tx: any, newCoins: any) {
+      if (!tx || typeof (tx as any).serialize !== "function") {
+        throw new Error("Objek transaksi tidak valid");
+      }
+
+      const balanced = await wallet.balanceTransaction(
+        ZswapTransaction.deserialize(
+          (tx as any).serialize(getLedgerNetworkId()),
+          getZswapNetworkId()
+        ),
+        newCoins
+      );
+
+      const proved = await wallet.proveTransaction(balanced);
+
+      return createBalancedTx(
+        Transaction.deserialize(
+          proved.serialize(getZswapNetworkId()),
+          getLedgerNetworkId()
+        )
+      );
+    },
+
+    submitTx(tx: any) {
+      return wallet.submitTransaction(tx as any);
+    },
   };
+}
+
+/**
+ * Generate seed wallet baru
+ */
+export function generateSeed(): string {
+  return crypto.randomBytes(32).toString("hex");
 }

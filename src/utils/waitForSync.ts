@@ -3,14 +3,11 @@ import { nativeToken } from "@midnight-ntwrk/ledger";
 import type { Wallet } from "@midnight-ntwrk/wallet-api";
 
 /**
- * Menunggu wallet:
- * 1. Selesai sync
- * 2. Menerima balance > 0
+ * Menunggu sinkronisasi wallet
  */
-export async function waitForFunds(wallet: Wallet): Promise<bigint> {
+export async function waitForSync(wallet: Wallet): Promise<bigint> {
   return Rx.firstValueFrom(
     wallet.state().pipe(
-      // Logging progress sinkronisasi wallet
       Rx.tap((state) => {
         if (state.syncProgress) {
           console.log(
@@ -18,18 +15,9 @@ export async function waitForFunds(wallet: Wallet): Promise<bigint> {
           );
         }
       }),
-
-      // Pastikan wallet sudah fully synced
       Rx.filter((state) => state.syncProgress?.synced === true),
-
-      // Ambil balance native token
-      Rx.map((state) => state.balances[nativeToken()] ?? 0n),
-
-      // Tunggu sampai balance masuk
-      Rx.filter((balance) => balance > 0n),
-
-      // Informasi wallet sudah ter-fund
-      Rx.tap((balance) => console.log(`Wallet funded with balance: ${balance}`))
+      Rx.map((s) => s.balances[nativeToken()] ?? 0n),
+      Rx.take(10),
     )
   );
 }

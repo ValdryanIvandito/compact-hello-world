@@ -21,7 +21,7 @@ export interface MidnightWalletProvider {
 }
 
 /**
- * Setup seluruh provider yang dibutuhkan untuk deploy dan berinteraksi dengan kontrak
+ * Setup seluruh provider kontrak Midnight
  */
 export async function setProviders(
   privateStateStoreName: string,
