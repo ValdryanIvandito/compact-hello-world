@@ -5,7 +5,7 @@ import * as readline from "readline/promises";
 import { buildWallet, createWalletProvider } from "../services/wallet";
 import { waitForSync } from "../utils/waitForSync";
 import { loadContract } from "../services/contract";
-import { setProviders } from "../services/provider";
+import { createMidnightProviders } from "../services/provider";
 
 /**
  * Use-case: menyimpan message ke smart contract
@@ -63,7 +63,7 @@ export async function storeMessage(
     // 5️⃣ Setup wallet provider & providers kontrak
     const walletProvider = createWalletProvider(wallet, state);
 
-    const providers = await setProviders(
+    const midnightProviders = await createMidnightProviders(
       privateStateStoreName,
       config,
       path.join(contractPath, "managed", contractName),
@@ -71,12 +71,15 @@ export async function storeMessage(
     );
 
     // 6️⃣ Resolve deployed contract instance
-    const deployedContract: any = await findDeployedContract(providers, {
-      contractAddress,
-      contract,
-      privateStateId,
-      initialPrivateState: {},
-    });
+    const deployedContract: any = await findDeployedContract(
+      midnightProviders,
+      {
+        contractAddress,
+        contract,
+        privateStateId,
+        initialPrivateState: {},
+      }
+    );
 
     // 7️⃣ Panggil method storeMessage
     console.log("✍️  Calling storeMessage...");

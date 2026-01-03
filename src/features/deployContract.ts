@@ -6,7 +6,7 @@ import { nativeToken } from "@midnight-ntwrk/ledger";
 
 import { buildWallet, createWalletProvider } from "../services/wallet";
 import { loadContract } from "../services/contract";
-import { setProviders } from "../services/provider";
+import { createMidnightProviders } from "../services/provider";
 import { waitForSync } from "../utils/waitForSync";
 
 /**
@@ -38,7 +38,7 @@ export async function deployContractApp(
     const walletProvider = createWalletProvider(wallet, state);
 
     // Setup provider kontrak
-    const providers = await setProviders(
+    const midnightProviders = await createMidnightProviders(
       privateStateStoreName,
       config,
       path.join(contractPath, "managed", contractName),
@@ -47,7 +47,7 @@ export async function deployContractApp(
 
     console.log("🚀 Deploying contract...");
 
-    const deployed = await deployContract(providers, {
+    const deployed = await deployContract(midnightProviders, {
       contract,
       privateStateId,
       initialPrivateState: {},

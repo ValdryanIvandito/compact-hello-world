@@ -1,6 +1,4 @@
 // src/services/provider.ts
-
-// Midnight Libraries
 import { httpClientProofProvider } from "@midnight-ntwrk/midnight-js-http-client-proof-provider";
 import { indexerPublicDataProvider } from "@midnight-ntwrk/midnight-js-indexer-public-data-provider";
 import { NodeZkConfigProvider } from "@midnight-ntwrk/midnight-js-node-zk-config-provider";
@@ -23,7 +21,7 @@ export interface MidnightWalletProvider {
 /**
  * Setup seluruh provider kontrak Midnight
  */
-export async function setProviders(
+export async function createMidnightProviders(
   privateStateStoreName: string,
   config: MidnightNetworkConfig,
   zkConfigPath: string,

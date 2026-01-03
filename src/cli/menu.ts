@@ -2,12 +2,12 @@ import inquirer from "inquirer";
 import chalk from "chalk";
 import dotenv from "dotenv";
 import { UndeployedNetwork } from "../config/network";
-import { createWalletApp } from "../app/createWallet";
-import { deployContractApp } from "../app/deployContract";
-import { requestFundsApp } from "../app/requestFunds";
-import { walletInfo } from "../app/walletInfo";
-import { storeMessage } from "../app/storeMessage";
-import { readMessage } from "../app/readMessage";
+import { createWalletApp } from "../features/createWallet";
+import { deployContractApp } from "../features/deployContract";
+import { requestFundsApp } from "../features/requestFunds";
+import { walletInfo } from "../features/walletInfo";
+import { storeMessage } from "../features/storeMessage";
+import { readMessage } from "../features/readMessage";
 
 const network = new UndeployedNetwork();
 const contractName = "hello-world";

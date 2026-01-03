@@ -1,6 +1,5 @@
 // src/indexerQuery.ts
 import { indexerPublicDataProvider } from "@midnight-ntwrk/midnight-js-indexer-public-data-provider";
-import { StateValue } from "@midnight-ntwrk/onchain-runtime";
 import * as fs from "fs";
 import * as path from "path";
 import { loadContract } from "../services/contract";
