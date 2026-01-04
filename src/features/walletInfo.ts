@@ -4,6 +4,7 @@ import chalk from "chalk";
 import fs from "fs";
 import path from "path";
 import { nativeToken } from "@midnight-ntwrk/ledger";
+// import { syncWallet } from "@midnight-ntwrk/midnight-js-testing";
 import { buildWallet } from "../services/wallet";
 import { waitForSync } from "../utils/waitForSync";
 
@@ -26,6 +27,7 @@ export async function walletInfo(config: any) {
     if (balance === 0n) {
       console.log("⏳ Menunggu sinkronisasi wallet...");
       balance = await waitForSync(wallet);
+      // balance = await syncWallet(wallet, 10000);
     }
 
     console.log(chalk.gray("Address       : "), chalk.green(state.address));
