@@ -1,16 +1,17 @@
+/** src/features/deployContract.ts */
+
 import fs from "fs";
 import path from "path";
-
+import boxen from "boxen";
+import chalk from "chalk";
 import { deployContract } from "@midnight-ntwrk/midnight-js-contracts";
-import { nativeToken } from "@midnight-ntwrk/ledger";
-
 import { buildWallet, createWalletProvider } from "../services/wallet";
 import { loadContract } from "../services/contract";
 import { createMidnightProviders } from "../services/provider";
 import { waitForSync } from "../utils/waitForSync";
 
 /**
- * Use-case deploy kontrak
+ * Deploy a smart contract to midnight network.
  */
 export async function deployContractApp(
   config: any,
@@ -19,25 +20,24 @@ export async function deployContractApp(
   privateStateStoreName: string,
   privateStateId: string
 ): Promise<void> {
+  // Build wallet used for deployment
   const { wallet, state, close } = await buildWallet(config, seed);
   try {
-    let balance = state.balances[nativeToken()] ?? 0n;
+    // Inform user that synchronization is in progress
+    console.log(chalk.gray("\n⏳ Waiting for synchronization...\n"));
 
-    // Jika belum ada saldo, tunggu faucet
-    if (balance === 0n) {
-      console.log("⏳ Menunggu dana masuk ke wallet...");
-      balance = await waitForSync(wallet);
-    }
+    // Ensure wallet is fully synchronized
+    await waitForSync(wallet);
 
-    // Load kontrak hasil compile
+    // Load compiled contract artifacts
     const contractPath = path.join(process.cwd(), "contracts");
     const contractModule = await loadContract(contractPath, contractName);
     const contract = new contractModule.Contract({});
 
-    // Setup wallet provider
+    // Create wallet provider
     const walletProvider = createWalletProvider(wallet, state);
 
-    // Setup provider kontrak
+    // Create Midnight contract providers
     const midnightProviders = await createMidnightProviders(
       privateStateStoreName,
       config,
@@ -45,21 +45,23 @@ export async function deployContractApp(
       walletProvider
     );
 
-    console.log("🚀 Deploying contract...");
+    console.log(chalk.cyan("\n🚀 Deploying contract..."));
 
+    // Deploy contract to the network
     const deployed = await deployContract(midnightProviders, {
       contract,
       privateStateId,
       initialPrivateState: {},
     });
 
+    // Extract deployed contract address
     const address = deployed.deployTxData?.public?.contractAddress;
 
     if (!address) {
       throw new Error("Deployment gagal, alamat kontrak tidak ditemukan");
     }
 
-    // Simpan metadata deployment
+    // Save deployment metadata
     fs.writeFileSync(
       "deployment.json",
       JSON.stringify(
@@ -72,8 +74,21 @@ export async function deployContractApp(
       )
     );
 
-    console.log("✔ Contract deployed");
-    console.log("Address:", address);
+    // Render deployment result inside a box
+    console.log(
+      boxen(
+        `${chalk.green.bold("CONTRACT DEPLOYED SUCCESSFULLY")}
+
+${chalk.gray("Contract Address")}
+${chalk.cyan("→")} ${chalk.cyan(address)}`,
+        {
+          padding: 0.5,
+          margin: 0.5,
+          borderStyle: "round",
+          borderColor: "green",
+        }
+      )
+    );
   } finally {
     await close();
   }

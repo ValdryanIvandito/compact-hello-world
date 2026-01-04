@@ -1,7 +1,8 @@
+/** src/services/wallet.ts */
+
 import crypto from "node:crypto";
 import { firstValueFrom } from "rxjs";
 
-import type { Wallet, WalletState } from "@midnight-ntwrk/wallet-api";
 import { WalletBuilder } from "@midnight-ntwrk/wallet";
 import { Transaction } from "@midnight-ntwrk/ledger";
 import { Transaction as ZswapTransaction } from "@midnight-ntwrk/zswap";
@@ -10,6 +11,8 @@ import {
   getLedgerNetworkId,
   getZswapNetworkId,
 } from "@midnight-ntwrk/midnight-js-network-id";
+
+import type { Wallet, WalletState } from "@midnight-ntwrk/wallet-api";
 
 /**
  * Context wallet runtime

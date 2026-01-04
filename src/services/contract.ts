@@ -1,4 +1,5 @@
-// src/services/contract.ts
+/** src/services/contract.ts */
+
 import * as fs from "fs";
 import * as path from "path";
 

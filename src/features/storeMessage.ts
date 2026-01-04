@@ -1,14 +1,18 @@
-import { findDeployedContract } from "@midnight-ntwrk/midnight-js-contracts";
+/** src/features/storeMessages.ts */
+
 import * as path from "path";
 import * as fs from "fs";
 import * as readline from "readline/promises";
+import chalk from "chalk";
+import boxen from "boxen";
+import { findDeployedContract } from "@midnight-ntwrk/midnight-js-contracts";
 import { buildWallet, createWalletProvider } from "../services/wallet";
-import { waitForSync } from "../utils/waitForSync";
 import { loadContract } from "../services/contract";
 import { createMidnightProviders } from "../services/provider";
+import { waitForSync } from "../utils/waitForSync";
 
 /**
- * Use-case: menyimpan message ke smart contract
+ * Store a message into the deployed smart contract.
  */
 export async function storeMessage(
   config: any,
@@ -17,19 +21,21 @@ export async function storeMessage(
   privateStateStoreName: string,
   privateStateId: string
 ): Promise<void> {
-  console.log("📨 Call storeMessage function...\n");
+  console.log(chalk.cyan("\n✍️  Store message to smart contract\n"));
 
+  // Read user input
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
   });
 
   const message = await rl.question("Enter your message: ");
+  rl.close();
 
-  // 1️⃣ Ambil contract address dari deployment.json
+  // Load deployed contract address
   if (!fs.existsSync("deployment.json")) {
     console.error(
-      "❌ deployment.json tidak ditemukan. Jalankan deploy contract terlebih dahulu."
+      chalk.red("❌ deployment.json not found. Deploy the contract first.")
     );
     return;
   }
@@ -39,30 +45,36 @@ export async function storeMessage(
     deployment.contractAddress || deployment.address;
 
   if (!contractAddress) {
-    console.error("❌ Contract address tidak valid di deployment.json");
+    console.error(chalk.red("❌ Invalid contract address in deployment.json"));
     return;
   }
 
-  console.log(`📄 Contract Address: ${contractAddress}\n`);
-  console.log("🌙 Connecting to Midnight network...\n");
+  console.log(
+    chalk.gray("📄 Contract address"),
+    chalk.white("→"),
+    chalk.cyan(contractAddress),
+    "\n"
+  );
 
-  // 2️⃣ Build wallet
+  // Build wallet and wait for synchronization
   const { wallet, state, close } = await buildWallet(config, seed);
 
   try {
-    // 3️⃣ WAJIB: tunggu wallet sync & ambil balance TERBARU
-    const balance = await waitForSync(wallet);
+    // Inform user that synchronization is in progress
+    console.log(chalk.gray("\n⏳ Waiting for synchronization...\n"));
 
-    console.log(`💰 Wallet balance (synced): ${balance.toString()}`);
+    // Wait until wallet is fully synced
+    await waitForSync(wallet);
 
-    // 4️⃣ Load kontrak hasil compile
+    // Load contract
     const contractPath = path.join(process.cwd(), "contracts");
     const contractModule = await loadContract(contractPath, contractName);
     const contract = new contractModule.Contract({});
 
-    // 5️⃣ Setup wallet provider & providers kontrak
+    // Setup wallet providers
     const walletProvider = createWalletProvider(wallet, state);
 
+    // Setup Midnight network providers
     const midnightProviders = await createMidnightProviders(
       privateStateStoreName,
       config,
@@ -70,7 +82,9 @@ export async function storeMessage(
       walletProvider
     );
 
-    // 6️⃣ Resolve deployed contract instance
+    // Resolve deployed contract and send transaction\
+    console.log(chalk.cyan("\n🚀 Sending transaction and storing message..."));
+
     const deployedContract: any = await findDeployedContract(
       midnightProviders,
       {
@@ -81,19 +95,32 @@ export async function storeMessage(
       }
     );
 
-    // 7️⃣ Panggil method storeMessage
-    console.log("✍️  Calling storeMessage...");
-
     const tx = await deployedContract.callTx.storeMessage(message);
 
-    console.log("✅ Message stored successfully!");
-    console.log(`Message        : ${message}`);
-    console.log(`Transaction ID : ${tx.public.txId}`);
-    console.log(`Block height   : ${tx.public.blockHeight}\n`);
+    console.log(
+      boxen(
+        `${chalk.green.bold("MESSAGE STORED SUCCESSFULLY")}
+
+${chalk.gray("Message")}
+${chalk.cyan("→")} ${chalk.cyan(`"${message}"`)}
+
+${chalk.gray("Transaction ID")}
+${chalk.cyan("→")} ${chalk.cyan(tx.public.txId)}
+
+${chalk.gray("Block Height")}
+${chalk.cyan("→")} ${chalk.cyan(tx.public.blockHeight.toString())}`,
+        {
+          padding: 0.5,
+          margin: 0.5,
+          borderStyle: "round",
+          borderColor: "green",
+        }
+      )
+    );
   } catch (error) {
-    console.error("❌ Failed to store message:", error);
+    console.error(error);
   } finally {
-    // 8️⃣ WAJIB: tutup wallet
+    // Always close wallet to release resources
     await close();
   }
 }

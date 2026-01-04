@@ -1,49 +1,43 @@
-// src/app/requestFunds.ts
+/** src/features/requestFunds.ts */
 
+import boxen from "boxen";
+import chalk from "chalk";
 import { nativeToken } from "@midnight-ntwrk/ledger";
 import { buildWallet } from "../services/wallet";
 import { waitForSync } from "../utils/waitForSync";
-
 import type { Wallet } from "@midnight-ntwrk/wallet-api";
 
+// Genesis (faucet) wallet seed
 const GENESIS_MINT_WALLET_SEED =
   "0000000000000000000000000000000000000000000000000000000000000001";
 
+// Amount sent to the receiver
 const FAUCET_AMOUNT = 1_000_000_000_000n;
 
 /**
- * Use-case request funds
+ * Request funds from the genesis wallet.
  */
 export async function requestFundsApp(
   config: any,
   receiverAddress: string
 ): Promise<void> {
-  if (!receiverAddress) {
-    console.log(
-      "❌ Wallet address tidak ditemukan. Buat wallet terlebih dahulu."
-    );
-    return;
-  }
-
-  // Build wallet faucet (genesis / mint wallet)
-  // Wallet ini bertindak sebagai pengirim dana
-  const { wallet, state, close } = await buildWallet(
-    config,
-    GENESIS_MINT_WALLET_SEED
-  );
+  // Build genesis wallet used as fund sender
+  const { wallet, close } = await buildWallet(config, GENESIS_MINT_WALLET_SEED);
 
   try {
-    let balance = state.balances[nativeToken()] ?? 0n;
+    // Inform user that synchronization is in progress
+    console.log(chalk.gray("\n⏳ Waiting for synchronization...\n"));
 
-    // Jika belum ada saldo, tunggu faucet
-    if (balance === 0n) {
-      console.log("⏳ Menunggu dana masuk ke wallet...");
-      balance = await waitForSync(wallet);
-    }
+    // Wait until genesis wallet is fully synced
+    const balance = await waitForSync(wallet);
 
-    console.log("Genesis wallet balance:", balance);
+    console.log(
+      chalk.gray("\n💰 Genesis wallet balance"),
+      chalk.white("→"),
+      chalk.yellow(`${balance.toString()} tDUST`)
+    );
 
-    // 1️⃣ Buat transfer recipe (belum prove, belum submit)
+    // Create transfer recipe (not proven, not submitted)
     const transferRecipe = await (wallet as Wallet).transferTransaction([
       {
         amount: FAUCET_AMOUNT,
@@ -52,23 +46,38 @@ export async function requestFundsApp(
       },
     ]);
 
-    console.log("✔ Transfer recipe berhasil dibuat");
+    console.log(chalk.green("\n✔ Transfer recipe created"));
 
-    // 2️⃣ Generate proof transaksi
+    // Generate transaction proof
     const transaction = await wallet.proveTransaction(transferRecipe);
-    console.log("✔ Transaction proof generated");
+    console.log(chalk.green("✔ Transaction proof generated"));
 
-    // 3️⃣ Submit transaksi ke node
+    // Submit transaction to the network
     const txHash = await wallet.submitTransaction(transaction);
-    console.log("✔ Transaction submitted");
-    console.log("TxHash:", txHash);
-  } catch (err) {
-    console.error("❌ Error saat request funds:", (err as Error).message);
+    console.log(chalk.green("✔ Transaction submitted"));
 
-    // Exit code non-zero agar bisa dipakai di CI / script
+    console.log(
+      boxen(
+        `${chalk.green.bold("REQUEST FUNDS SUCCESSFUL")}
+
+${chalk.gray("🔗 Transaction Hash")}
+${chalk.cyan("→")} ${chalk.cyan(txHash)}`,
+        {
+          padding: 0.5,
+          margin: 0.5,
+          borderStyle: "round",
+          borderColor: "green",
+        }
+      )
+    );
+  } catch (err) {
+    // Log error message
+    console.error((err as Error).message);
+
+    // Set non-zero exit code for CI / scripts
     process.exitCode = 1;
   } finally {
-    // WAJIB: tutup wallet untuk release resource
+    // Always close wallet to release resources
     await close();
   }
 }

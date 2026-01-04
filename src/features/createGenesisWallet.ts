@@ -1,43 +1,47 @@
-// src/app/requestFunds.ts
+/** src/features/createGenesisWallet.ts */
 
-import { nativeToken } from "@midnight-ntwrk/ledger";
+import chalk from "chalk";
 import { buildWallet } from "../services/wallet";
 import { waitForSync } from "../utils/waitForSync";
 import { UndeployedNetwork } from "../config/network";
 
+// Network configuration (undeployed/local)
 const config = new UndeployedNetwork();
 
+// Hardcoded seed for genesis / faucet wallet
 const GENESIS_MINT_WALLET_SEED =
   "0000000000000000000000000000000000000000000000000000000000000001";
 
 /**
- * Use-case request funds
+ * Initializes the genesis wallet and ensures it has balance.
  */
 async function createGenesisWallet(): Promise<void> {
-  // Build wallet faucet (genesis / mint wallet)
-  // Wallet ini bertindak sebagai pengirim dana
-  const { wallet, state, close } = await buildWallet(
-    config,
-    GENESIS_MINT_WALLET_SEED
-  );
+  // Build genesis (mint) wallet used as fund sender
+  const { wallet, close } = await buildWallet(config, GENESIS_MINT_WALLET_SEED);
 
   try {
-    let balance = state.balances[nativeToken()] ?? 0n;
+    // Inform user that synchronization is in progress
+    console.log(chalk.gray("\n⏳ Waiting for synchronization...\n"));
 
-    // Jika belum ada saldo, tunggu faucet
-    if (balance === 0n) {
-      console.log("⏳ Menunggu sinkronisasi...");
-      balance = await waitForSync(wallet);
-    }
-    console.log("Genesis wallet berhasil dibuat !");
-    console.log("Genesis wallet balance:", balance);
+    // Synchronization to network
+    const balance = await waitForSync(wallet);
+
+    console.log(
+      chalk.green.bold("\n✔ Genesis wallet successfully initialized")
+    );
+    console.log(
+      chalk.gray("💰 Balance"),
+      chalk.white("→"),
+      chalk.yellow.bold(`${balance.toString()} tDUST\n`)
+    );
   } catch (err) {
+    // Log error message
     console.error((err as Error).message);
 
-    // Exit code non-zero agar bisa dipakai di CI / script
+    // Set non-zero exit code for CI / scripts
     process.exitCode = 1;
   } finally {
-    // WAJIB: tutup wallet untuk release resource
+    // Always close wallet to release resources
     await close();
   }
 }

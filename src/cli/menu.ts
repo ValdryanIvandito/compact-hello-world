@@ -1,45 +1,49 @@
-import inquirer from "inquirer";
+/** src/cli/menu.ts */
+
 import chalk from "chalk";
 import dotenv from "dotenv";
+import inquirer from "inquirer";
+
+import { walletInfo } from "../features/walletInfo";
 import { UndeployedNetwork } from "../config/network";
 import { createWalletApp } from "../features/createWallet";
-import { deployContractApp } from "../features/deployContract";
 import { requestFundsApp } from "../features/requestFunds";
-import { walletInfo } from "../features/walletInfo";
+import { deployContractApp } from "../features/deployContract";
 import { storeMessage } from "../features/storeMessage";
 import { readMessage } from "../features/readMessage";
 
+// Network and contract configuration
 const network = new UndeployedNetwork();
 const contractName = "hello-world";
 const privStateStoreName = "hello-world-state";
 const privStateId = "helloWorldState";
 
 /**
- * Menu utama CLI
+ * Main CLI menu loop
  */
 export async function showMainMenu() {
-  // Loop utama CLI
+  // Continuous CLI loop
   while (true) {
-    // Reload .env setiap loop
+    // Reload environment variables on each iteration
     dotenv.config({ override: true });
 
-    const walletExist =
-      !!process.env.WALLET_SEED &&
-      !!process.env.WALLET_ADDRESS &&
-      !!process.env.WALLET_COIN_PUBKEY;
+    const walletSeed = process.env.WALLET_SEED;
+    const walletAddress = process.env.WALLET_ADDRESS;
+    const walletCoinPubKey = process.env.WALLET_COIN_PUBKEY;
 
-    // Jika wallet ada, tampilkan info wallet
-    if (walletExist) {
-      await walletInfo(network);
+    // Display wallet info if wallet exists
+    if (walletSeed && walletAddress && walletCoinPubKey) {
+      await walletInfo(network, walletSeed);
     } else {
       console.log(
-        chalk.yellow("\n⚠️  Wallet belum ditemukan, silahkan buat wallet baru.")
+        chalk.red("\n⚠️  Wallet not found. Please create a wallet first.")
       );
     }
 
-    // Menu utama
-    console.log(chalk.cyan.bold("\n🧩 Menu"));
+    // Main menu header
+    console.log(chalk.cyan.bold("\n🧩 MENU"));
 
+    // Prompt user for action
     const { action } = await inquirer.prompt([
       {
         type: "rawlist",
@@ -48,10 +52,10 @@ export async function showMainMenu() {
         choices: [
           { name: "🔄 Refresh wallet", value: "refresh" },
           { name: "🆕 Create new wallet", value: "create" },
-          { name: "💰 Request funds", value: "request" },
+          { name: "💰 Request funds (Faucet)", value: "request" },
           { name: "🚀 Deploy contract", value: "deploy" },
           { name: "📝 Store message", value: "store" },
-          { name: "📖 Read message", value: "read" },
+          { name: "📖 Read message (Public)", value: "read" },
           { name: "❌ Exit", value: "exit" },
         ],
       },
@@ -66,23 +70,16 @@ export async function showMainMenu() {
         break;
 
       case "request":
-        await requestFundsApp(
-          network,
-          process.env.WALLET_ADDRESS ? process.env.WALLET_ADDRESS : ""
-        );
+        if (walletSeed && walletAddress && walletCoinPubKey) {
+          await requestFundsApp(network, walletAddress);
+        }
         break;
 
       case "deploy":
-        if (!process.env.WALLET_SEED) {
-          console.log(
-            chalk.red(
-              "❌ Wallet belum ada. Silakan buat wallet terlebih dahulu."
-            )
-          );
-        } else {
+        if (walletSeed && walletAddress && walletCoinPubKey) {
           await deployContractApp(
             network,
-            process.env.WALLET_SEED,
+            walletSeed,
             contractName,
             privStateStoreName,
             privStateId
@@ -91,16 +88,10 @@ export async function showMainMenu() {
         break;
 
       case "store":
-        if (!process.env.WALLET_SEED) {
-          console.log(
-            chalk.red(
-              "❌ Wallet belum ada. Silakan buat wallet terlebih dahulu."
-            )
-          );
-        } else {
+        if (walletSeed && walletAddress && walletCoinPubKey) {
           await storeMessage(
             network,
-            process.env.WALLET_SEED,
+            walletSeed,
             contractName,
             privStateStoreName,
             privStateId
@@ -109,17 +100,15 @@ export async function showMainMenu() {
         break;
 
       case "read":
-        await readMessage(network, contractName);
+        if (walletSeed && walletAddress && walletCoinPubKey) {
+          await readMessage(network, contractName);
+        }
         break;
 
       case "exit":
       default:
-        console.log(chalk.gray("Goodbye 👋 \n"));
+        console.log(chalk.cyan.bold("\n👋 GOODBYE  \n"));
         process.exit(0);
     }
-
-    console.log(
-      "-----------------------------------------------------------------------------------\n"
-    );
   }
 }
