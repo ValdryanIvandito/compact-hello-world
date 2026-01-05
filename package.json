@@ -5,7 +5,6 @@
   "author": "Valdryan Ivandito",
   "scripts": {
     "genesis": "docker compose up -d && tsx src/features/createGenesisWallet.ts",
-    "undeployed-network": "docker compose up -d",
     "compile": "compact compile contracts/hello-world.compact contracts/managed/hello-world",
     "start": "tsx src/cli/index.ts"
   },

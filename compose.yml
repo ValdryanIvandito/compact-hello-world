@@ -1,3 +1,16 @@
+# ------------------------------------------------------------------------------
+# Midnight Local Network - Docker Compose
+#
+# This docker-compose configuration is adapted from the Brick Towers
+# Midnight Local Network project.
+#
+# Original repository:
+# https://github.com/bricktowers/midnight-local-network
+#
+# Credit & thanks to the Brick Towers team for providing
+# the local Midnight network setup.
+# ------------------------------------------------------------------------------
+
 services:
   proof-server:
     container_name: "proof-server"
