@@ -1,7 +1,12 @@
 pragma language_version 0.18;
 
+// Public ledger state (stored on-chain)
 export ledger message: Opaque<"string">;
 
+// Circuit entrypoint to update the ledger state
 export circuit storeMessage(customMessage: Opaque<"string">): [] {
+  // Explicitly reveal private input before writing to ledger
   message = disclose(customMessage);
 }
+
+// Important note : Message is public and stored in the ledger.
