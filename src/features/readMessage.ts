@@ -15,7 +15,12 @@ export async function readMessage(config: any, contractName: string) {
 
   // Read contract address from deployment metadata
   if (!fs.existsSync("deployment.json")) {
-    throw new Error("deployment.json not found. Deploy the contract first.");
+    console.error(
+      chalk.red(
+        "❌ deployment.json not found. Deploy the contract first (npm run compile)."
+      )
+    );
+    return;
   }
 
   const deployment = JSON.parse(fs.readFileSync("deployment.json", "utf8"));
@@ -23,7 +28,12 @@ export async function readMessage(config: any, contractName: string) {
     deployment.address || deployment.contractAddress;
 
   if (!contractAddress) {
-    throw new Error("Contract address not found in deployment.json");
+    console.error(
+      chalk.red(
+        "❌ Contract address not found in deployment.json, please retry compile the smart contract (npm run compile)."
+      )
+    );
+    return;
   }
 
   console.log(
@@ -40,7 +50,7 @@ export async function readMessage(config: any, contractName: string) {
   const state = await provider.queryContractState(contractAddress);
 
   if (!state) {
-    console.log(chalk.yellow("⚠️  No contract state found yet."));
+    console.log(chalk.red("⚠️  No contract state found yet."));
     return;
   }
 

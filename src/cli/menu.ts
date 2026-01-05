@@ -1,5 +1,6 @@
 /** src/cli/menu.ts */
 
+import * as readline from "readline/promises";
 import chalk from "chalk";
 import dotenv from "dotenv";
 import inquirer from "inquirer";
@@ -11,6 +12,7 @@ import { requestFundsApp } from "../features/requestFunds";
 import { deployContractApp } from "../features/deployContract";
 import { storeMessage } from "../features/storeMessage";
 import { readMessage } from "../features/readMessage";
+import { pause } from "../utils/pause";
 
 // Network and contract configuration
 const network = new UndeployedNetwork();
@@ -67,13 +69,15 @@ export async function showMainMenu() {
 
       case "create":
         await createWalletApp(network);
-        break;
+        await pause();
+        continue;
 
       case "request":
         if (walletSeed && walletAddress && walletCoinPubKey) {
           await requestFundsApp(network, walletAddress);
         }
-        break;
+        await pause();
+        continue;
 
       case "deploy":
         if (walletSeed && walletAddress && walletCoinPubKey) {
@@ -85,7 +89,8 @@ export async function showMainMenu() {
             privStateId
           );
         }
-        break;
+        await pause();
+        continue;
 
       case "store":
         if (walletSeed && walletAddress && walletCoinPubKey) {
@@ -97,13 +102,15 @@ export async function showMainMenu() {
             privStateId
           );
         }
-        break;
+        await pause();
+        continue;
 
       case "read":
         if (walletSeed && walletAddress && walletCoinPubKey) {
           await readMessage(network, contractName);
         }
-        break;
+        await pause();
+        continue;
 
       case "exit":
       default:

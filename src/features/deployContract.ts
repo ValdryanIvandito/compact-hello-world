@@ -27,7 +27,16 @@ export async function deployContractApp(
     console.log(chalk.gray("\n⏳ Waiting for synchronization...\n"));
 
     // Ensure wallet is fully synchronized
-    await waitForSync(wallet);
+    const balance = await waitForSync(wallet);
+
+    if (balance === 0n) {
+      console.error(
+        chalk.red(
+          "❌ Not sufficient funds, please request fund first using faucet."
+        )
+      );
+      return;
+    }
 
     // Load compiled contract artifacts
     const contractPath = path.join(process.cwd(), "contracts");
@@ -58,7 +67,12 @@ export async function deployContractApp(
     const address = deployed.deployTxData?.public?.contractAddress;
 
     if (!address) {
-      throw new Error("Deployment gagal, alamat kontrak tidak ditemukan");
+      console.error(
+        chalk.red(
+          "❌ Failed to extract contract address, please retry compile the smart contract (npm run compile)."
+        )
+      );
+      return;
     }
 
     // Save deployment metadata

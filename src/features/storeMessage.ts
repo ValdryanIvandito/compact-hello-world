@@ -23,19 +23,12 @@ export async function storeMessage(
 ): Promise<void> {
   console.log(chalk.cyan("\n✍️  Store message to smart contract\n"));
 
-  // Read user input
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-
-  const message = await rl.question("Enter your message: ");
-  rl.close();
-
   // Load deployed contract address
   if (!fs.existsSync("deployment.json")) {
     console.error(
-      chalk.red("❌ deployment.json not found. Deploy the contract first.")
+      chalk.red(
+        "❌ deployment.json not found. Deploy the contract first (npm run compile)."
+      )
     );
     return;
   }
@@ -45,7 +38,11 @@ export async function storeMessage(
     deployment.contractAddress || deployment.address;
 
   if (!contractAddress) {
-    console.error(chalk.red("❌ Invalid contract address in deployment.json"));
+    console.error(
+      chalk.red(
+        "❌ Contract address not found in deployment.json, please retry compile the smart contract (npm run compile)."
+      )
+    );
     return;
   }
 
@@ -82,9 +79,6 @@ export async function storeMessage(
       walletProvider
     );
 
-    // Resolve deployed contract and send transaction\
-    console.log(chalk.cyan("\n🚀 Sending transaction and storing message..."));
-
     const deployedContract: any = await findDeployedContract(
       midnightProviders,
       {
@@ -94,6 +88,19 @@ export async function storeMessage(
         initialPrivateState: {},
       }
     );
+
+    // Read user input
+    console.log("\n");
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+
+    const message = await rl.question("Enter your message: ");
+    rl.close();
+
+    // Resolve deployed contract and send transaction
+    console.log(chalk.cyan("\n🚀 Sending transaction and storing message..."));
 
     const tx = await deployedContract.callTx.storeMessage(message);
 
