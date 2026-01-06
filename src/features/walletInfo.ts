@@ -2,8 +2,7 @@
 
 import boxen from "boxen";
 import chalk from "chalk";
-import { buildWallet } from "../services/wallet";
-import { waitForSync } from "../utils/waitForSync";
+import { buildWallet, syncWallet } from "../services/wallet";
 
 /**
  * Display current wallet information.
@@ -22,7 +21,7 @@ export async function walletInfo(config: any, walletSeed: string) {
      * Wait until wallet is fully synchronized
      * before reading on-chain data.
      */
-    const balance = await waitForSync(wallet);
+    const balance = await syncWallet(wallet);
 
     // Build boxed CLI content
     const content = `

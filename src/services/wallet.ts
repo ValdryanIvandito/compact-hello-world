@@ -1,10 +1,11 @@
 /** src/services/wallet.ts */
 
 import crypto from "node:crypto";
+import * as Rx from "rxjs";
 import { firstValueFrom } from "rxjs";
 
 import { WalletBuilder } from "@midnight-ntwrk/wallet";
-import { Transaction } from "@midnight-ntwrk/ledger";
+import { Transaction, nativeToken } from "@midnight-ntwrk/ledger";
 import { Transaction as ZswapTransaction } from "@midnight-ntwrk/zswap";
 import { createBalancedTx } from "@midnight-ntwrk/midnight-js-types";
 import {
@@ -15,7 +16,8 @@ import {
 import type { Wallet, WalletState } from "@midnight-ntwrk/wallet-api";
 
 /**
- * Context wallet runtime
+ * Runtime wallet context wrapper.
+ * Holds the wallet instance, its latest state, and a cleanup handler.
  */
 export interface WalletContext {
   wallet: Wallet;
@@ -24,7 +26,15 @@ export interface WalletContext {
 }
 
 /**
- * Build wallet dari seed
+ * Generate a new random 32-byte wallet seed (hex-encoded).
+ */
+export function generateSeed(): string {
+  return crypto.randomBytes(32).toString("hex");
+}
+
+/**
+ * Build and start a Midnight wallet from a seed.
+ * Waits for the initial wallet state before returning.
  */
 export async function buildWallet(
   config: any,
@@ -56,7 +66,36 @@ export async function buildWallet(
 }
 
 /**
- * Adapter wallet agar kompatibel dengan deployContract
+ * Wait until the wallet is fully synchronized and
+ * return the native token balance.
+ */
+export async function syncWallet(wallet: Wallet): Promise<bigint> {
+  return Rx.firstValueFrom(
+    // Subscribe to wallet state updates
+    wallet.state().pipe(
+      Rx.tap((state) => {
+        if (state.syncProgress) {
+          console.log(
+            `Sync progress: synced=${state.syncProgress.synced}, sourceGap=${state.syncProgress.lag.sourceGap}, applyGap=${state.syncProgress.lag.applyGap}`
+          );
+        }
+      }),
+
+      // Continue only once the wallet is fully synced
+      Rx.filter((state) => state.syncProgress?.synced === true),
+
+      // Read the native token balance (default to 0n)
+      Rx.map((s) => s.balances[nativeToken()] ?? 0n),
+
+      // Safety guard to prevent infinite streams
+      Rx.take(10)
+    )
+  );
+}
+
+/**
+ * Wallet adapter compatible with Midnight contract deployment APIs.
+ * Handles transaction balancing, proving, and submission.
  */
 export function createWalletProvider(wallet: Wallet, state: WalletState) {
   return {
@@ -68,6 +107,7 @@ export function createWalletProvider(wallet: Wallet, state: WalletState) {
         throw new Error("Objek transaksi tidak valid");
       }
 
+      // Convert ledger transaction → zswap → balanced → proved → ledger
       const balanced = await wallet.balanceTransaction(
         ZswapTransaction.deserialize(
           (tx as any).serialize(getLedgerNetworkId()),
@@ -86,15 +126,9 @@ export function createWalletProvider(wallet: Wallet, state: WalletState) {
       );
     },
 
+    // Submit a proved ledger transaction to the network
     submitTx(tx: any) {
       return wallet.submitTransaction(tx as any);
     },
   };
-}
-
-/**
- * Generate seed wallet baru
- */
-export function generateSeed(): string {
-  return crypto.randomBytes(32).toString("hex");
 }

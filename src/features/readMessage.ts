@@ -13,24 +13,26 @@ import { loadContract } from "../services/contract";
 export async function readMessage(config: any, contractName: string) {
   console.log(chalk.gray("\n🔍 Querying contract state via indexer...\n"));
 
-  // Read contract address from deployment metadata
+  /**
+   * Check if contract address exist
+   */
   if (!fs.existsSync("deployment.json")) {
     console.error(
       chalk.red(
-        "❌ deployment.json not found. Deploy the contract first (npm run compile)."
+        "❌ deployment.json not found. Compile and deploy the contract."
       )
     );
     return;
   }
 
-  const deployment = JSON.parse(fs.readFileSync("deployment.json", "utf8"));
-  const contractAddress: string =
-    deployment.address || deployment.contractAddress;
+  const { contractAddress } = JSON.parse(
+    fs.readFileSync("deployment.json", "utf-8")
+  );
 
   if (!contractAddress) {
     console.error(
       chalk.red(
-        "❌ Contract address not found in deployment.json, please retry compile the smart contract (npm run compile)."
+        "❌ Contract address not found in deployment.json, please retry compile and deploy the contract."
       )
     );
     return;

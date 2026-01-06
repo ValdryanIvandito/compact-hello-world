@@ -3,8 +3,7 @@
 import boxen from "boxen";
 import chalk from "chalk";
 import { nativeToken } from "@midnight-ntwrk/ledger";
-import { buildWallet } from "../services/wallet";
-import { waitForSync } from "../utils/waitForSync";
+import { buildWallet, syncWallet } from "../services/wallet";
 import type { Wallet } from "@midnight-ntwrk/wallet-api";
 
 // Genesis (faucet) wallet seed
@@ -29,7 +28,7 @@ export async function requestFundsApp(
     console.log(chalk.gray("\n⏳ Waiting for synchronization...\n"));
 
     // Wait until genesis wallet is fully synced
-    const balance = await waitForSync(wallet);
+    const balance = await syncWallet(wallet);
 
     console.log(
       chalk.gray("\n💰 Genesis wallet balance"),

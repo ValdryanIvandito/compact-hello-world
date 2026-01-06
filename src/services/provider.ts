@@ -20,7 +20,15 @@ export interface MidnightWalletProvider {
 }
 
 /**
- * Setup seluruh provider kontrak Midnight
+ * Creates and wires all required providers for interacting with
+ * a Midnight smart contract.
+ *
+ * Includes:
+ * - Private contract state storage
+ * - Public ledger data access via indexer
+ * - Zero-knowledge configuration (compiled Compact artifacts)
+ * - Proof server connection
+ * - Wallet integration for balancing and submitting transactions
  */
 export async function createMidnightProviders(
   privateStateStoreName: string,
@@ -29,27 +37,27 @@ export async function createMidnightProviders(
   walletProvider: MidnightWalletProvider
 ) {
   return {
-    // Penyimpanan private state kontrak
+    // Contract private state persistence (local LevelDB)
     privateStateProvider: levelPrivateStateProvider({
       privateStateStoreName,
     }),
 
-    // Public data dari indexer
+    // Access to public ledger data via indexer (HTTP + WebSocket)
     publicDataProvider: indexerPublicDataProvider(
       config.indexer,
       config.indexerWS
     ),
 
-    // Konfigurasi ZK (hasil compile compact)
+    // Zero-knowledge circuit configuration from compiled Compact output
     zkConfigProvider: new NodeZkConfigProvider(zkConfigPath),
 
-    // Proof server
+    // Proof generation and submission service
     proofProvider: httpClientProofProvider(config.proofServer),
 
-    // Wallet provider
+    // Wallet used for balancing and submitting transactions
     walletProvider,
 
-    // Alias untuk kompatibilitas API
+    // Alias for SDK compatibility with older APIs
     midnightProvider: walletProvider,
   };
 }

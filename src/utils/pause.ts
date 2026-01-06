@@ -10,7 +10,7 @@ export async function pause(): Promise<void> {
   });
 
   while (true) {
-    const answer = (await rl.question("Type 'Y' to continue: "))
+    const answer = (await rl.question("\nType 'Y' to continue: "))
       .trim()
       .toUpperCase();
 

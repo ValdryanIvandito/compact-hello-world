@@ -1,6 +1,5 @@
 /** src/cli/menu.ts */
 
-import * as readline from "readline/promises";
 import chalk from "chalk";
 import dotenv from "dotenv";
 import inquirer from "inquirer";

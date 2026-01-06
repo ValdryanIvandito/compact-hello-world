@@ -5,10 +5,13 @@ import path from "path";
 import boxen from "boxen";
 import chalk from "chalk";
 import { deployContract } from "@midnight-ntwrk/midnight-js-contracts";
-import { buildWallet, createWalletProvider } from "../services/wallet";
+import {
+  buildWallet,
+  syncWallet,
+  createWalletProvider,
+} from "../services/wallet";
 import { loadContract } from "../services/contract";
 import { createMidnightProviders } from "../services/provider";
-import { waitForSync } from "../utils/waitForSync";
 
 /**
  * Deploy a smart contract to midnight network.
@@ -27,7 +30,7 @@ export async function deployContractApp(
     console.log(chalk.gray("\n⏳ Waiting for synchronization...\n"));
 
     // Ensure wallet is fully synchronized
-    const balance = await waitForSync(wallet);
+    const balance = await syncWallet(wallet);
 
     if (balance === 0n) {
       console.error(
@@ -69,7 +72,7 @@ export async function deployContractApp(
     if (!address) {
       console.error(
         chalk.red(
-          "❌ Failed to extract contract address, please retry compile the smart contract (npm run compile)."
+          "❌ Failed to extract contract address, please retry compile and deploy the smart contract."
         )
       );
       return;
@@ -103,6 +106,8 @@ ${chalk.cyan("→")} ${chalk.cyan(address)}`,
         }
       )
     );
+  } catch (error) {
+    console.error(error);
   } finally {
     await close();
   }

@@ -1,8 +1,7 @@
 /** src/features/createGenesisWallet.ts */
 
 import chalk from "chalk";
-import { buildWallet } from "../services/wallet";
-import { waitForSync } from "../utils/waitForSync";
+import { buildWallet, syncWallet } from "../services/wallet";
 import { UndeployedNetwork } from "../config/network";
 
 // Network configuration (undeployed/local)
@@ -24,7 +23,7 @@ async function createGenesisWallet(): Promise<void> {
     console.log(chalk.gray("\n⏳ Waiting for synchronization...\n"));
 
     // Synchronization to network
-    const balance = await waitForSync(wallet);
+    const balance = await syncWallet(wallet);
 
     console.log(
       chalk.green.bold("\n✔ Genesis wallet successfully initialized")
