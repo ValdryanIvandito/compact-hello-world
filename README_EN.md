@@ -3,11 +3,13 @@
 **Midnight Starter Kit Hello-World** is a starter kit for developers who want to learn and experiment with the **Midnight Network** blockchain.
 
 This project is designed for:
+
 - Junior developers who want a clear starting point
 - Experienced developers who want a minimal, local-first setup
 - Anyone interested in understanding Midnight Network fundamentals
 
 The focus is on the **simplest end-to-end workflow**:
+
 - Local undeployed network
 - Wallet & faucet setup
 - Compact smart contract
@@ -46,14 +48,17 @@ The interface is intentionally simple and developer-oriented.
 ## 🛠️ Prerequisites
 
 ### Required
+
 - Node.js >= 20
 - npm
 - Docker Desktop
 
 ### Windows Users (Important)
+
 Windows users **must use WSL2 (Ubuntu recommended)**.
 
 Required setup:
+
 - Windows 10 / 11
 - WSL2 with Ubuntu
 - Docker Desktop with WSL integration enabled
@@ -75,6 +80,7 @@ npm install
 ### 2️⃣ Initialize Local Network & Genesis Wallet
 
 This command will:
+
 - Build Docker images
 - Start containers (node, indexer, proof server)
 - Create a genesis wallet acting as a faucet
@@ -120,6 +126,7 @@ npm run start
 ## 📜 Smart Contract
 
 This project includes a minimal Compact contract that:
+
 - Stores a message
 - Allows reading the message via the indexer
 
@@ -143,8 +150,6 @@ contracts/
 ---
 
 ## 📚 References
-
-This project is inspired by official Midnight and Brick Towers resources:
 
 - https://docs.midnight.network/getting-started
 - https://github.com/midnightntwrk/create-mn-app

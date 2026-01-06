@@ -151,8 +151,6 @@ contracts/
 
 ## 📚 Referensi
 
-Proyek ini terinspirasi dari dokumentasi resmi Midnight dan Brick Towers:
-
 - https://docs.midnight.network/getting-started
 - https://github.com/midnightntwrk/create-mn-app
 - https://github.com/bricktowers/midnight-local-network
